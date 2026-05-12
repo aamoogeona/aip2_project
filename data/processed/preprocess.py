@@ -2,10 +2,9 @@ import pandas as pd
 import datetime
 from sklearn.preprocessing import LabelEncoder
 
-
-def load_data(filepath="역별지하철_혼잡도_정리본-1 (1).xlsx"):
+def load_data(filepath="혼잡도_정리본2.xlsx"):
     df = pd.read_excel(filepath)
-
+    
     # 컬럼명 정리
     df = df.rename(columns={'역명 |시간대': '역명', '요일구분': '요일'})
 
@@ -19,12 +18,14 @@ def load_data(filepath="역별지하철_혼잡도_정리본-1 (1).xlsx"):
             col_rename[col] = f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
     df = df.rename(columns=col_rename)
 
+    
     # 병합 셀로 인한 역명, 요일 결측치를 앞 값으로 채우기
     df[['역명', '요일']] = df[['역명', '요일']].ffill()
 
     # melt로 wide -> long 변환
+    import re
     id_vars = ['역명', '요일', '상하구분']
-    value_vars = [col for col in df.columns if col not in id_vars]
+    value_vars = [col for col in df.columns if re.match(r'^\d{2}:\d{2}$', str(col))]
     df_melted = df.melt(
         id_vars=id_vars,
         value_vars=value_vars,
@@ -38,7 +39,10 @@ def load_data(filepath="역별지하철_혼잡도_정리본-1 (1).xlsx"):
 
     # 시간대 "HH:MM" -> 분 단위 숫자로 변환
     df_melted['시간대'] = df_melted['시간대'].apply(
-        lambda x: int(x.split(':')[0]) * 60 + int(x.split(':')[1])
+    lambda x: int(x.split(':')[0]) * 60 + int(x.split(':')[1])
+    )
+    df_melted['시간대'] = df_melted['시간대'].apply(
+    lambda x: x + 1440 if x < 330 else x
     )
 
     # 문자열 숫자로 인코딩
