@@ -1,0 +1,57 @@
+import pandas as pd
+import datetime
+from sklearn.preprocessing import LabelEncoder
+
+
+def load_data(filepath="역별지하철_혼잡도_정리본-1 (1).xlsx"):
+    df = pd.read_excel(filepath)
+
+    # 컬럼명 정리
+    df = df.rename(columns={'역명 |시간대': '역명', '요일구분': '요일'})
+
+    # 시간대 컬럼 이름을 "HH:MM" 문자열로 변환
+    col_rename = {}
+    for col in df.columns:
+        if isinstance(col, datetime.time):
+            col_rename[col] = col.strftime('%H:%M')
+        elif isinstance(col, datetime.timedelta):
+            total_minutes = int(col.total_seconds() // 60)
+            col_rename[col] = f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
+    df = df.rename(columns=col_rename)
+
+    # 병합 셀로 인한 역명, 요일 결측치를 앞 값으로 채우기
+    df[['역명', '요일']] = df[['역명', '요일']].ffill()
+
+    # melt로 wide -> long 변환
+    id_vars = ['역명', '요일', '상하구분']
+    value_vars = [col for col in df.columns if col not in id_vars]
+    df_melted = df.melt(
+        id_vars=id_vars,
+        value_vars=value_vars,
+        var_name='시간대',
+        value_name='혼잡도'
+    )
+
+    # 공백 문자열을 NaN으로 변환 후 제거
+    df_melted['혼잡도'] = pd.to_numeric(df_melted['혼잡도'], errors='coerce')
+    df_melted = df_melted.dropna(subset=['혼잡도'])
+
+    # 시간대 "HH:MM" -> 분 단위 숫자로 변환
+    df_melted['시간대'] = df_melted['시간대'].apply(
+        lambda x: int(x.split(':')[0]) * 60 + int(x.split(':')[1])
+    )
+
+    # 문자열 숫자로 인코딩
+    encoders = {}
+    for col in ['역명', '요일', '상하구분']:
+        le = LabelEncoder()
+        df_melted[col] = le.fit_transform(df_melted[col])
+        encoders[col] = le
+
+    # 역명 코드 매핑 테이블 저장
+    station_map = pd.DataFrame({
+        '역_코드': range(len(encoders['역명'].classes_)),
+        '역명': encoders['역명'].classes_
+    })
+
+    return df_melted, encoders, station_map
