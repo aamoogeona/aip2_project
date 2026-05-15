@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-df_melted, encoders, station_map = load_data(os.path.join(BASE_DIR, "data", "혼잡도_정리본_2.xlsx"))
+df_melted, encoders, station_map = load_data(os.path.join(BASE_DIR, "data", "raw", "혼잡도_정리본.xlsx"))
 
 # feature, label 분리
 X = df_melted[['역명', '요일', '상하구분', '시간대']]
