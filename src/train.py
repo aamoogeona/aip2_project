@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 df_melted, encoders, station_map = load_data(os.path.join(BASE_DIR, '..', 'data', 'raw', '혼잡도_정리본_2.xlsx'))
 
 # feature, label 분리
-X = df_melted[['역명', '요일', '상하구분', '시간대', 'KBO', '공휴일', '가중치']]
+X = df_melted[['역명', '요일', '상하구분', '시간대', 'KBO', '공휴일', 'COEX', '가중치', 'COEX_가중치']]
 y = df_melted['혼잡도']
 
 
@@ -31,7 +31,7 @@ from sklearn.metrics import mean_absolute_error
 
 
 
-#모델 평가(MAE)
+# == 모델 평가(MAE) ==
 y_pred = model.predict(X_test)
 mae = mean_absolute_error(y_test, y_pred)
 print(f"MAE: {mae:.4f}")
@@ -63,9 +63,33 @@ print("이벤트 값 분포:")
 print(df_melted['KBO'].value_counts())
 print(df_melted['공휴일'].value_counts())
 '''
-
+'''
 # 이벤트일/비이벤트일 MAE 분리
-df_test['이벤트있음'] = df_test['KBO']==1
+df_test['이벤트있음'] = (df_test['KBO']==1) | (df_test['COEX']==1)
 print("=== 이벤트일/비이벤트일 MAE ===")
 print(df_test.groupby('이벤트있음')['오차'].agg(['mean', 'count']))
 
+print("\n=== KBO/COEX별 MAE ===")
+print(df_test.groupby(['KBO', 'COEX'])['오차'].agg(['mean', 'count']))
+
+# COEX 행사일 삼성역 디버깅
+df_coex = df_test[(df_test['COEX']==1)].copy()
+df_coex['역명_원본'] = encoders['역명'].inverse_transform(df_coex['역명'])
+print("\n=== COEX 행사일 데이터 ===")
+print(f"전체 COEX=1 행 수: {len(df_coex)}")
+print(f"역명별 분포:")
+print(df_coex['역명_원본'].value_counts())
+
+print("\n=== COEX 행사일 시간대별 오차 ===")
+print(df_coex.groupby('시간대')['오차'].agg(['mean', 'count']).head(20))
+
+print("\n=== COEX 행사일 샘플 ===")
+print(df_coex[['시간대', '실제값', '예측값', '오차', 'COEX_가중치']].head(20))
+'''
+df_samsung = df_test[df_test['역명']==encoders['역명'].transform(['삼성'])[0]].copy()
+print("=== 삼성역 COEX별 MAE ===")
+print(df_samsung.groupby('COEX')['오차'].agg(['mean', 'count']))
+
+df_samsung = df_test[df_test['역명']==encoders['역명'].transform(['삼성'])[0]].copy()
+print("=== 삼성역 시간대별 MAE (COEX 무관 평균) ===")
+print(df_samsung.groupby('시간대')['오차'].mean().sort_values(ascending=False).head(10))

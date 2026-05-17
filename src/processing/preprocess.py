@@ -3,8 +3,10 @@ import os
 import datetime
 from sklearn.preprocessing import LabelEncoder
 from preprocess_event import map_day_of_week, load_event_data
+from preprocess_coex import load_coex_data
 
 def load_data(filepath="혼잡도_정리본2.xlsx"):
+    # == 1. 혼잡도 데이터 전처리 ==
     df = pd.read_excel(filepath)
     
     # 컬럼명 정리
@@ -46,6 +48,7 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     lambda x: x + 1440 if x < 330 else x
     )
 
+    # == 2. 날짜 병합==
     #2026년 날짜 테이블 만들기 
     dates = pd.date_range(start='2026-01-01', end='2026-12-31')
     df_dates = pd.DataFrame({'날짜': dates})
@@ -54,6 +57,7 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     #요일 정보 병합
     df_melted = pd.merge(df_melted, df_dates, on='요일')
 
+    # == 3. 이벤트(KBO, 공휴일) 병합, 이벤트 종류 분류 ==
     #공휴일 kbo 데이터 병합
     df_event = load_event_data()
     df_melted = pd.merge(df_melted, df_event[['날짜', '역명', '시간대', '이벤트']],
@@ -80,14 +84,24 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     df_melted['KBO'] = df_melted['이벤트종류'].apply(lambda x: 1 if x == 'KBO' else 0)
     df_melted['공휴일'] = df_melted['이벤트종류'].apply(lambda x: 1 if x == '공휴일' else 0)
 
-    #혼잡도 가중치 보정
+    # == 4. KBO/공휴일 가중치 join ==
+    # 혼잡도 가중치 보정
     df_weights = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'processed', 'event_weights.csv'))
     df_melted = pd.merge(df_melted, df_weights[['역명', '요일', '시간대', '가중치', '이벤트종류']], on=['역명', '요일', '시간대', '이벤트종류'], how='left')
     df_melted['가중치'] = df_melted['가중치'].fillna(0)
     #df_melted['혼잡도'] = df_melted['혼잡도'] * (1 + df_melted['가중치'])
 
+    # == 5. COEX 이벤트 병합 ==
+    df_coex = load_coex_data()
+    df_melted = pd.merge(df_melted, df_coex, on='날짜', how='left')
+    df_melted['COEX_가중치'] = df_melted['COEX_가중치'].fillna(0)
+    df_melted.loc[df_melted['역명'] != '삼성', 'COEX_가중치'] = 0
+    df_melted['COEX'] = (df_melted['COEX_가중치'] > 0).astype(int)
+
+    # == 6. drop 컬럼 정리 ==
     df_melted = df_melted.drop(columns=['날짜', '이벤트종류', '이벤트'])
 
+    # == 7. 인코딩 및 반환 ==
     # 문자열 숫자로 인코딩
     encoders = {}
     for col in ['역명', '요일', '상하구분']:
