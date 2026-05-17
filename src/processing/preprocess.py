@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import datetime
 from sklearn.preprocessing import LabelEncoder
 from preprocess_event import map_day_of_week, load_event_data
@@ -19,7 +20,6 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
             col_rename[col] = f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
     df = df.rename(columns=col_rename)
 
-    
     # 병합 셀로 인한 역명, 요일 결측치를 앞 값으로 채우기
     df[['역명', '요일']] = df[['역명', '요일']].ffill()
 
@@ -61,6 +61,33 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
                         how='left')
     df_melted['이벤트'] = df_melted['이벤트'].fillna(0)
 
+    kbo_dates = set(df_event[
+        (df_event['역명'] == '종합운동장') & 
+        (df_event['이벤트'] == 1)
+        ]['날짜'].unique())
+
+    def classify_event(row):
+        if row['이벤트'] == 0:
+            return 'none'
+        elif row['역명'] == '종합운동장':
+            return 'KBO'
+        elif row['역명'] == '잠실' and row['날짜'] in kbo_dates:
+            return 'KBO'
+        else:
+            return '공휴일'
+        
+    df_melted['이벤트종류'] = df_melted.apply(classify_event, axis=1)
+    df_melted['KBO'] = df_melted['이벤트종류'].apply(lambda x: 1 if x == 'KBO' else 0)
+    df_melted['공휴일'] = df_melted['이벤트종류'].apply(lambda x: 1 if x == '공휴일' else 0)
+
+    #혼잡도 가중치 보정
+    df_weights = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'data', 'processed', 'event_weights.csv'))
+    df_melted = pd.merge(df_melted, df_weights[['역명', '요일', '시간대', '가중치', '이벤트종류']], on=['역명', '요일', '시간대', '이벤트종류'], how='left')
+    df_melted['가중치'] = df_melted['가중치'].fillna(0)
+    #df_melted['혼잡도'] = df_melted['혼잡도'] * (1 + df_melted['가중치'])
+
+    df_melted = df_melted.drop(columns=['날짜', '이벤트종류', '이벤트'])
+
     # 문자열 숫자로 인코딩
     encoders = {}
     for col in ['역명', '요일', '상하구분']:
@@ -75,3 +102,4 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     })
 
     return df_melted, encoders, station_map
+

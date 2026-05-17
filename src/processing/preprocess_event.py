@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(BASE_DIR, '..', '..', 'data', 'raw', '공휴일_KBO_일정.csv')
+csv_path = os.path.join(BASE_DIR, '..', '..', 'data', 'raw', '2026_공휴일_KBO_일정_v2.csv')
 df_kbo = pd.read_csv(csv_path, encoding="utf-8-sig")
 
 def map_day_of_week(day):
