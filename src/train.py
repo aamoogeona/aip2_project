@@ -9,17 +9,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 df_melted, encoders, station_map = load_data(os.path.join(BASE_DIR, '..', 'data', 'raw', '혼잡도_정리본_2.xlsx'))
 
 # feature, label 분리
-
-#현재: 가중치 활용
-#X = df_melted[['역명', '요일', '상하구분', '시간대', 'KBO', '공휴일', '가중치']]
-
-#임시 테스트용
-df_melted['이벤트'] = ((df_melted['KBO']==1) | (df_melted['공휴일']==1)).astype(int)
-X = df_melted[['역명', '요일', '상하구분', '시간대', '이벤트']]
+X = df_melted[['역명', '요일', '상하구분', '시간대', 'KBO', '공휴일', '가중치']]
 y = df_melted['혼잡도']
 
-#sample_weight 만들기
-sample_weight = 1 + df_melted['가중치']  
 
 # 학습, 검증 데이터 8:2 분할
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
