@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 from sklearn.preprocessing import LabelEncoder
+from preprocess_event import map_day_of_week, load_event_data
 
 def load_data(filepath="혼잡도_정리본2.xlsx"):
     df = pd.read_excel(filepath)
@@ -44,6 +45,21 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     df_melted['시간대'] = df_melted['시간대'].apply(
     lambda x: x + 1440 if x < 330 else x
     )
+
+    #2026년 날짜 테이블 만들기 
+    dates = pd.date_range(start='2026-01-01', end='2026-12-31')
+    df_dates = pd.DataFrame({'날짜': dates})
+    df_dates['요일'] = df_dates['날짜'].dt.dayofweek.apply(map_day_of_week)
+
+    #요일 정보 병합
+    df_melted = pd.merge(df_melted, df_dates, on='요일')
+
+    #공휴일 kbo 데이터 병합
+    df_event = load_event_data()
+    df_melted = pd.merge(df_melted, df_event[['날짜', '역명', '시간대', '이벤트']],
+                        on=['날짜', '역명', '시간대'],
+                        how='left')
+    df_melted['이벤트'] = df_melted['이벤트'].fillna(0)
 
     # 문자열 숫자로 인코딩
     encoders = {}
