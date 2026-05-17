@@ -1,7 +1,7 @@
 import sys
 import os
 import pandas as pd
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'processed'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'processed'))
 from preprocess import load_data
 from sklearn.model_selection import train_test_split
 
