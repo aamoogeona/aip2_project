@@ -27,6 +27,7 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
 
     # melt로 wide -> long 변환
     import re
+    df['상하구분'] = df['상하구분'].str.strip()
     id_vars = ['역명', '요일', '상하구분']
     value_vars = [col for col in df.columns if re.match(r'^\d{2}:\d{2}$', str(col))]
     df_melted = df.melt(
@@ -99,7 +100,8 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
     df_melted['COEX'] = (df_melted['COEX_가중치'] > 0).astype(int)
 
     # == 6. drop 컬럼 정리 ==
-    df_melted = df_melted.drop(columns=['날짜', '이벤트종류', '이벤트'])
+    #df_melted = df_melted.drop(columns=['날짜', '이벤트종류', '이벤트'])
+    df_melted = df_melted.drop(columns=['이벤트종류', '이벤트'])
 
     # == 7. 인코딩 및 반환 ==
     # 문자열 숫자로 인코딩
@@ -117,3 +119,9 @@ def load_data(filepath="혼잡도_정리본2.xlsx"):
 
     return df_melted, encoders, station_map
 
+
+if __name__ == '__main__':
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    df_melted, encoders, station_map = load_data(os.path.join(BASE_DIR, '..', '..', 'data', 'raw', '혼잡도_정리본_2.xlsx'))
+    df_melted.to_csv(os.path.join(BASE_DIR, '..', '..', 'data', 'processed', 'df_processed.csv'), index=False)
+    
