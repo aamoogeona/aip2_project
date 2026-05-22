@@ -1,3 +1,6 @@
+#XGBoost 비교 시험용
+
+
 import sys
 import os
 import joblib
@@ -76,7 +79,6 @@ df_test['오차'] = abs(df_test['실제값'] - df_test['예측값'])
 # 인코딩 풀어서 비교
 df_test['역명_원본'] = encoders['역명'].inverse_transform(df_test['역명'])
 
-
 '''
 target_stations = ['잠실', '종합운동장', '홍대입구', '강남']
 df_target = df_test[df_test['역명_원본'].isin(target_stations)]
@@ -121,7 +123,7 @@ print(df_samsung.groupby('COEX')['오차'].agg(['mean', 'count']))
 df_samsung = df_test[df_test['역명']==encoders['역명'].transform(['삼성'])[0]].copy()
 print("=== 삼성역 시간대별 MAE (COEX 무관 평균) ===")
 print(df_samsung.groupby('시간대')['오차'].mean().sort_values(ascending=False).head(10))
-'''
+
 
 df_test['요일_원본'] = encoders['요일'].inverse_transform(df_test['요일'])
 df_weekday = df_test[df_test['요일_원본'] == '평일']
@@ -133,3 +135,4 @@ df_weekday['시간대_원본'] = df_weekday['시간대'].apply(
 )
 print("=== 평일 시간대별 MAE ===")
 print(df_weekday.groupby('시간대_원본')['오차'].mean().sort_values(ascending=False).head(10))
+'''

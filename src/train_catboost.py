@@ -56,10 +56,11 @@ from sklearn.metrics import mean_absolute_error
 
 
 # == 모델 저장 ==
+'''
 joblib.dump(model, os.path.join(BASE_DIR, '..', 'models', 'catboost_model.pkl'))
 joblib.dump(encoders, os.path.join(BASE_DIR, '..', 'models', 'encoders.pkl'))
 joblib.dump(station_map, os.path.join(BASE_DIR, '..', 'models', 'station_map.pkl'))
-
+'''
 
 # == 모델 평가(MAE) ==
 y_pred = model.predict(X_test)

@@ -23,8 +23,8 @@ station_enc = encoders['역명'].transform(['잠실'])[0]
 day_enc = encoders['요일'].transform(['평일'])[0]
 dir_enc = encoders['상하구분'].transform(['내선'])[0]
 
-# == 이상 탐지 == 
-
+# == 이상 탐지 == (데이터 처리 시도 후 재구현)
+'''
 #가중치 조회
 weight_row = df_weights[
     (df_weights['역명'] == station) &
@@ -90,7 +90,7 @@ print(f"이벤트: {event_type}")
 print(f"평소 예측 혼잡도: {pred_normal:.1f}")
 print(f"오늘 예측 혼잡도: {pred_today:.1f}")
 print(f"차이: {diff:+.1f} ({diff_pct:+.1f}%)")
-
+'''
 
 # == 시간대 추천 ==
 
@@ -132,9 +132,11 @@ for i, row in df_result.iterrows():
 best = df_result.iloc[0]
 print(f"\n추천: {best['시간대_표시']}가 가장 한산")
 
+'''
 print(df_melted[
     (df_melted['역명'] == station_enc) &
     (df_melted['요일'] == day_enc) &
     (df_melted['상하구분'] == dir_enc) &
     (df_melted['시간대'].isin(time_list))
 ][['시간대', '혼잡도']].drop_duplicates().sort_values('시간대'))
+'''
