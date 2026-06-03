@@ -9,13 +9,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 from catboost import CatBoostRegressor
 
-# 저장 위치: aip2_project/src/train_catboost_estimated.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, 'processing'))
 from preprocess import load_data
 
 # =============================================
-# Step 1: estimated_daily_usage 로드 (베이스)
+# Step 1: estimated_daily_usage 로드
 # =============================================
 estimated_path = os.path.join(BASE_DIR, '..', 'data', 'processed', 'estimated_daily_usage.csv')
 df_est = pd.read_csv(estimated_path, encoding='utf-8-sig')
