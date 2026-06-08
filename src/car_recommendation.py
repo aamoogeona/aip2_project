@@ -97,10 +97,11 @@ def recommend_car(date, departure, arrival, direction, congestion):
 
     recommendations = []
     for _, row in rows.iterrows():
+        transfer_line = row["환승선"]
         recommendations.append({
             "car": int(row["칸"]),
             "door": int(row["차량출입문번호"]),
-            "transfer_line": row["환승선"],
+            "transfer_line": str(transfer_line) if pd.notna(transfer_line) else None,
         })
 
     if len(recommendations) == 1:
