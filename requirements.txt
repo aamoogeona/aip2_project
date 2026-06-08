@@ -6,3 +6,6 @@ joblib
 openpyxl
 xgboost
 flask
+playwright
+beautifulsoup4
+requests
