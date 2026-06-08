@@ -49,6 +49,11 @@ SCHEDULE_STATIONS = {"강남", "잠실", "종합운동장", "홍대입구"}
 TIME_COLS = [c for c in _df_schedule.columns if c not in ("Date", "Station")]
 
 
+def reload_schedule():
+    global _df_schedule
+    _df_schedule = _load_schedule()
+
+
 def get_weekday(date_str):
     dow = datetime.strptime(date_str, "%Y-%m-%d").weekday()
     if dow == 5:

@@ -9,6 +9,7 @@
 """
 
 import os
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
@@ -23,11 +24,23 @@ from prediction import (
     get_weekday,
     LINE2_STATIONS,
 )
-from event_detection import check_event
+from event_detection import check_event, reload_schedule
 from car_recommendation import recommend_car
+from event_pipeline import update_event_schedule
 
 
 app = FastAPI(title="2호선 혼잡도 예측 API")
+
+
+@app.on_event("startup")
+async def startup():
+    try:
+        await asyncio.to_thread(update_event_schedule)
+        reload_schedule()
+        print("[✓] 이벤트 스케줄 갱신 완료")
+    except Exception as e:
+        print(f"[WARN] 이벤트 스케줄 갱신 실패, static CSV로 운영: {e}")
+
 
 app.add_middleware(
     CORSMiddleware,
